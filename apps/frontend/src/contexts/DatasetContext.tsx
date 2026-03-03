@@ -17,7 +17,7 @@ import {
 } from "../utils/datasetCache";
 
 const GITHUB_DATASETS_URL =
-    "https://github.com/kekekawaii2839/draftgap/releases/download/datasets";
+    "https://raw.githubusercontent.com/kekekawaii2839/draftgap/datasets";
 
 function getDatasetUrl(tier: RankTier, period: string): string {
     if (tier === "emerald_plus") {
