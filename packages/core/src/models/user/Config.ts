@@ -2,6 +2,15 @@ import { RiskLevel } from "../../risk/risk-level";
 
 export type StatsSite = "op.gg" | "u.gg" | "lolalytics";
 
+export const RankTier = ["diamond_plus", "emerald_plus", "gold_plus"] as const;
+export type RankTier = (typeof RankTier)[number];
+
+export const displayNameByRankTier: Record<RankTier, string> = {
+    diamond_plus: "Diamond+",
+    emerald_plus: "Emerald+",
+    gold_plus: "Gold+",
+};
+
 export const DraftTablePlacement = {
     Bottom: "bottom",
     Hidden: "hidden",
@@ -15,6 +24,7 @@ export type DraftGapConfig = {
     ignoreChampionWinrates: boolean;
     riskLevel: RiskLevel;
     minGames: number;
+    rankTier: RankTier;
 
     // DRAFT SUGGESTIONS
     showFavouritesAtTop: boolean;

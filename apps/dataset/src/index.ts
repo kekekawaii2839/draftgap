@@ -79,6 +79,9 @@ const STAT_SHARD_DATA = {
 };
 
 async function main() {
+    const tier = process.env.TIER ?? "emerald_plus";
+    console.log("Tier:", tier);
+
     const currentVersion = (await getVersions())[0];
     console.log("Patch:", currentVersion);
 
@@ -106,6 +109,7 @@ async function main() {
         runes,
         items,
         summonerSpells,
+        tier,
     );
     const dataset30days = await getDataset(
         "30",
@@ -113,12 +117,13 @@ async function main() {
         runes,
         items,
         summonerSpells,
+        tier,
     );
 
     deleteDatasetMatchupSynergyData(datasetCurrentPatch);
 
-    await storeDataset(datasetCurrentPatch, { name: "current-patch" });
-    await storeDataset(dataset30days, { name: "30-days" });
+    await storeDataset(datasetCurrentPatch, { name: "current-patch", tier });
+    await storeDataset(dataset30days, { name: "30-days", tier });
 }
 
 function riotRunesToRuneData(runes: RiotRunePath[]) {
@@ -209,6 +214,7 @@ async function getDataset(
     runes: RiotRunePath[],
     items: Record<string, RiotItem>,
     summonerSpells: Record<string, RiotSummonerSpell>,
+    tier: string = "emerald_plus",
 ) {
     console.log("Getting dataset for version", version);
     const dataset: Dataset = {
@@ -233,7 +239,7 @@ async function getDataset(
                 async (champion) =>
                     [
                         champion,
-                        await getChampionDataFromLolalytics(version, champion),
+                        await getChampionDataFromLolalytics(version, champion, tier),
                     ] as const,
             ),
         );

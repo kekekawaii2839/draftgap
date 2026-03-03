@@ -5,14 +5,22 @@ import {
     PutObjectCommand,
     type PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
-import { client } from "./client";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
     DATASET_VERSION,
     type Dataset,
 } from "@draftgap/core/src/models/dataset/Dataset";
 import { bytesToHumanReadable } from "../utils";
 
+// Lazily import S3 client so missing credentials don't crash local-output builds
+async function getS3Client() {
+    const { client } = await import("./client");
+    return client;
+}
+
 export async function getDataset({ name }: { name: string }) {
+    const client = await getS3Client();
     const params = {
         Bucket: process.env.S3_BUCKET || "draftgap",
         Key: `datasets/v${DATASET_VERSION}/${name}.json`,
@@ -23,10 +31,28 @@ export async function getDataset({ name }: { name: string }) {
     return JSON.parse(body) as Dataset;
 }
 
+async function storeDatasetLocally(
+    dataset: Dataset,
+    { name, tier }: { name: string; tier: string },
+) {
+    const dir = join(import.meta.dir, "../../output", tier);
+    await mkdir(dir, { recursive: true });
+    const filePath = join(dir, `${name}.json`);
+    const serialized = JSON.stringify(dataset);
+    await writeFile(filePath, serialized, "utf-8");
+    console.log(
+        `Saved dataset locally to ${filePath} (${bytesToHumanReadable(serialized.length)})`,
+    );
+}
+
 export async function storeDataset(
     dataset: Dataset,
-    { name }: { name: string },
+    { name, tier = "emerald_plus" }: { name: string; tier?: string },
 ) {
+    if (!process.env.S3_ACCESS_KEY_ID) {
+        return storeDatasetLocally(dataset, { name, tier });
+    }
+    const client = await getS3Client();
     const params = {
         Bucket: process.env.S3_BUCKET || "draftgap",
         Key: `datasets/v${DATASET_VERSION}/${name}.json`,

@@ -9,24 +9,56 @@ import {
     DATASET_VERSION,
     Dataset,
 } from "@draftgap/core/src/models/dataset/Dataset";
+import { RankTier } from "@draftgap/core/src/models/user/Config";
+import { useUser } from "./UserContext";
+import {
+    getCachedDataset,
+    setCachedDataset,
+} from "../utils/datasetCache";
 
-const fetchDataset = async (name: "30-days" | "current-patch") => {
+const GITHUB_DATASETS_URL =
+    "https://github.com/kekekawaii2839/draftgap/releases/download/datasets";
+
+function getDatasetUrl(tier: RankTier, period: string): string {
+    if (tier === "emerald_plus") {
+        return `https://bucket.draftgap.com/datasets/v${DATASET_VERSION}/${period}.json`;
+    }
+    return `${GITHUB_DATASETS_URL}/${tier}-${period}.json`;
+}
+
+async function fetchDatasetWithCache(
+    tier: RankTier,
+    period: string,
+): Promise<Dataset | undefined> {
     try {
-        const response = await fetch(
-            `https://bucket.draftgap.com/datasets/v${DATASET_VERSION}/${name}.json`,
-        );
-        const json = await response.json();
-        return json as Dataset;
+        const cached = await getCachedDataset(tier, period);
+        if (cached) return cached;
+
+        const url = getDatasetUrl(tier, period);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const dataset = (await response.json()) as Dataset;
+
+        await setCachedDataset(tier, period, dataset);
+        return dataset;
     } catch (err) {
-        console.error(err);
+        console.error(`Failed to fetch dataset [${tier}/${period}]:`, err);
         return undefined;
     }
-};
+}
 
 function createDatasetContext() {
-    const [dataset] = createResource("current-patch", fetchDataset);
+    const { config } = useUser();
 
-    const [dataset30Days] = createResource("30-days", fetchDataset);
+    const [dataset] = createResource(
+        () => config.rankTier,
+        (tier) => fetchDatasetWithCache(tier, "current-patch"),
+    );
+
+    const [dataset30Days] = createResource(
+        () => config.rankTier,
+        (tier) => fetchDatasetWithCache(tier, "30-days"),
+    );
 
     const isLoaded = () =>
         dataset() !== undefined && dataset30Days() !== undefined;

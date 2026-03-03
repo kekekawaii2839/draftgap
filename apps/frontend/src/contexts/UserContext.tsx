@@ -16,6 +16,7 @@ const DEFAULT_CONFIG: DraftGapConfig = {
     ignoreChampionWinrates: false,
     riskLevel: "medium",
     minGames: 1000,
+    rankTier: "emerald_plus",
 
     // UI
     showFavouritesAtTop: false,

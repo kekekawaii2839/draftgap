@@ -26,6 +26,7 @@ import { useDraftView } from "./contexts/DraftViewContext";
 import { useUser } from "./contexts/UserContext";
 import { useDataset } from "./contexts/DatasetContext";
 import { LoadingIcon } from "./components/icons/LoadingIcon";
+import { displayNameByRankTier } from "@draftgap/core/src/models/user/Config";
 import { DialogTrigger, Dialog } from "./components/common/Dialog";
 import SettingsDialog from "./components/dialogs/SettingsDialog";
 import { FAQDialog } from "./components/dialogs/FAQDialog";
@@ -83,9 +84,24 @@ const App: Component = () => {
                             dataset.state === "ready" && dataset() === undefined
                         }
                     >
-                        <div class="flex justify-center items-center h-full text-2xl text-red-500">
-                            An unexpected error occurred. Please try again
-                            later.
+                        <div class="flex flex-col justify-center items-center h-full gap-3">
+                            {config.rankTier !== "emerald_plus" ? (
+                                <>
+                                    <div class="text-xl text-yellow-400">
+                                        {displayNameByRankTier[config.rankTier]}{" "}
+                                        dataset is not available yet.
+                                    </div>
+                                    <div class="text-sm text-neutral-400">
+                                        Switch back to Emerald+ or generate and
+                                        upload the dataset files for this tier.
+                                    </div>
+                                </>
+                            ) : (
+                                <div class="text-2xl text-red-500">
+                                    An unexpected error occurred. Please try
+                                    again later.
+                                </div>
+                            )}
                         </div>
                     </Match>
                     <Match when={!isLoaded()}>
