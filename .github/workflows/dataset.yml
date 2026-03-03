@@ -101,35 +101,33 @@ jobs:
         needs: build-extra-tier
         permissions:
             contents: write
-        env:
-            GH_REPO: ${{ github.repository }}
         steps:
+            - name: Checkout datasets branch
+              uses: actions/checkout@v4
+              with:
+                  ref: datasets
+                  path: datasets-branch
+
             - name: Download all tier artifacts
               uses: actions/download-artifact@v4
               with:
                   pattern: dataset-*
-                  path: datasets/
+                  path: artifacts/
 
-            - name: Rename files for release
+            - name: Copy files into datasets branch
               run: |
-                  for dir in datasets/dataset-*/; do
-                    tier="${dir#datasets/dataset-}"
+                  for dir in artifacts/dataset-*/; do
+                    tier="${dir#artifacts/dataset-}"
                     tier="${tier%/}"
-                    cp "${dir}current-patch.json" "${tier}-current-patch.json"
-                    cp "${dir}30-days.json" "${tier}-30-days.json"
+                    cp "${dir}current-patch.json" "datasets-branch/${tier}-current-patch.json"
+                    cp "${dir}30-days.json" "datasets-branch/${tier}-30-days.json"
                   done
 
-            - name: Create datasets release if not exists
+            - name: Commit and push
               run: |
-                  gh release view datasets 2>/dev/null || \
-                  gh release create datasets \
-                    --title "Datasets" \
-                    --notes "Auto-updated tier datasets. Refreshed daily." \
-                    --prerelease
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Upload datasets to release
-              run: gh release upload datasets *-current-patch.json *-30-days.json --clobber
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  git add -A
+                  git commit -m "Update datasets $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+                  git push --force
+              working-directory: datasets-branch
