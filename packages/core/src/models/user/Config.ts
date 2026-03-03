@@ -3,22 +3,26 @@ import { RiskLevel } from "../../risk/risk-level";
 export type StatsSite = "op.gg" | "u.gg" | "lolalytics";
 
 export const RankTier = [
-    "master_plus",
     "diamond_plus",
     "emerald_plus",
-    "platinum_plus",
-    "gold_plus",
-    "all",
+    "emerald",
+    "platinum",
+    "gold",
+    "silver",
+    "bronze",
+    "iron",
 ] as const;
 export type RankTier = (typeof RankTier)[number];
 
 export const displayNameByRankTier: Record<RankTier, string> = {
-    master_plus: "Master+",
     diamond_plus: "Diamond+",
     emerald_plus: "Emerald+",
-    platinum_plus: "Platinum+",
-    gold_plus: "Gold+",
-    all: "All Ranks",
+    emerald: "Emerald",
+    platinum: "Platinum",
+    gold: "Gold",
+    silver: "Silver",
+    bronze: "Bronze",
+    iron: "Iron",
 };
 
 export const DraftTablePlacement = {

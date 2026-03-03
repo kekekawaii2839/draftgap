@@ -68,7 +68,7 @@ jobs:
 
             - name: Build extra tier datasets
               run: |
-                  for tier in master_plus diamond_plus platinum_plus gold_plus all; do
+                  for tier in diamond_plus emerald platinum gold silver bronze iron; do
                     echo "=== Building $tier ==="
                     export TIER=$tier
                     bun run start
@@ -76,7 +76,7 @@ jobs:
 
             - name: Rename files for release
               run: |
-                  for tier in master_plus diamond_plus platinum_plus gold_plus all; do
+                  for tier in diamond_plus emerald platinum gold silver bronze iron; do
                     cp output/${tier}/current-patch.json ${tier}-current-patch.json
                     cp output/${tier}/30-days.json ${tier}-30-days.json
                   done
@@ -94,11 +94,13 @@ jobs:
             - name: Upload datasets to release
               run: |
                   gh release upload datasets \
-                    master_plus-current-patch.json master_plus-30-days.json \
                     diamond_plus-current-patch.json diamond_plus-30-days.json \
-                    platinum_plus-current-patch.json platinum_plus-30-days.json \
-                    gold_plus-current-patch.json gold_plus-30-days.json \
-                    all-current-patch.json all-30-days.json \
+                    emerald-current-patch.json emerald-30-days.json \
+                    platinum-current-patch.json platinum-30-days.json \
+                    gold-current-patch.json gold-30-days.json \
+                    silver-current-patch.json silver-30-days.json \
+                    bronze-current-patch.json bronze-30-days.json \
+                    iron-current-patch.json iron-30-days.json \
                     --clobber
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
