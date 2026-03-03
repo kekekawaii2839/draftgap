@@ -11,9 +11,7 @@ import { useUser } from "../../contexts/UserContext";
 import { useMedia } from "../../hooks/useMedia";
 import {
     DraftTablePlacement,
-    RankTier,
     StatsSite,
-    displayNameByRankTier,
 } from "@draftgap/core/src/models/user/Config";
 import {
     Dialog,
@@ -32,13 +30,6 @@ export default function SettingsDialog() {
         (level) => ({
             value: level,
             label: displayNameByRiskLevel[level],
-        }),
-    );
-
-    const rankTierOptions: ButtonGroupOption<RankTier>[] = RankTier.map(
-        (tier) => ({
-            value: tier,
-            label: displayNameByRankTier[tier],
         }),
     );
 
@@ -115,17 +106,6 @@ export default function SettingsDialog() {
                         })
                     }
                 />
-                <div class="flex flex-col gap-1 mt-3">
-                    <span class="text-lg uppercase">Rank tier</span>
-                    <ButtonGroup
-                        options={rankTierOptions}
-                        selected={config.rankTier}
-                        size="sm"
-                        onChange={(value: RankTier) =>
-                            setConfig({ rankTier: value })
-                        }
-                    />
-                </div>
             </div>
             <div>
                 <h3 class="text-3xl uppercase">UI</h3>
