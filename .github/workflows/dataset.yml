@@ -101,6 +101,8 @@ jobs:
         needs: build-extra-tier
         permissions:
             contents: write
+        env:
+            GH_REPO: ${{ github.repository }}
         steps:
             - name: Download all tier artifacts
               uses: actions/download-artifact@v4
