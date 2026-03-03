@@ -16,15 +16,19 @@ export async function getChampionDataFromLolalytics(
     champion: RiotChampion,
     tier: string = "emerald_plus",
 ) {
-    const [championData, champion2Data] = await Promise.all([
-        getLolalyticsQwikChampion(version, champion.id, undefined, undefined, undefined, tier),
-        getLolalyticsQwikChampion2(version, champion.id, undefined, tier),
-    ]);
+    let championData, champion2Data;
+    try {
+        [championData, champion2Data] = await Promise.all([
+            getLolalyticsQwikChampion(version, champion.id, undefined, undefined, undefined, tier),
+            getLolalyticsQwikChampion2(version, champion.id, undefined, tier),
+        ]);
+    } catch {
+        return undefined;
+    }
 
-    // If data is not available, throw
+    // If data is not available, skip
     if (!championData.skill6) {
         return undefined;
-        //throw new Error("No data available for this champion and patch");
     }
 
     const mainRole = championData.header.lane as LolalyticsRole;
