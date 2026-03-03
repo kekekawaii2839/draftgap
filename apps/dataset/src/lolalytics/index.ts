@@ -103,7 +103,7 @@ export async function getChampionDataFromLolalytics(
                     synergy: Object.fromEntries(
                         LOLALYTICS_ROLES.filter((r) => r !== role).map(
                             (synergyRole) => {
-                                const data = champion2Data.team[synergyRole]!;
+                                const data = champion2Data.team?.[synergyRole] ?? [];
 
                                 return [
                                     getRoleFromString(synergyRole),
