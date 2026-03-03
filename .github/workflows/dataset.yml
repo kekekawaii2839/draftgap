@@ -4,13 +4,12 @@ on:
         - cron: "0 12 * * *"
     workflow_dispatch:
 
-defaults:
-    run:
-        working-directory: apps/dataset
-
 jobs:
     publish:
         runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: apps/dataset
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -40,10 +39,30 @@ jobs:
                   S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
                   S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
 
-    publish-extra-tiers:
+    build-extra-tier:
         runs-on: ubuntu-latest
-        permissions:
-            contents: write
+        defaults:
+            run:
+                working-directory: apps/dataset
+        strategy:
+            matrix:
+                tier:
+                    - challenger
+                    - grandmaster
+                    - grandmaster_plus
+                    - master
+                    - master_plus
+                    - diamond
+                    - diamond_plus
+                    - emerald
+                    - platinum_plus
+                    - platinum
+                    - gold_plus
+                    - gold
+                    - silver
+                    - bronze
+                    - iron
+                    - all
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -66,19 +85,36 @@ jobs:
             - name: Install app dependencies
               run: bun install
 
-            - name: Build extra tier datasets
-              run: |
-                  for tier in challenger grandmaster grandmaster_plus master master_plus diamond diamond_plus emerald platinum_plus platinum gold_plus gold silver bronze iron all; do
-                    echo "=== Building $tier ==="
-                    export TIER=$tier
-                    bun run start
-                  done
+            - name: Build dataset
+              run: bun run start
+              env:
+                  TIER: ${{ matrix.tier }}
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dataset-${{ matrix.tier }}
+                  path: apps/dataset/output/${{ matrix.tier }}/
+
+    publish-extra-tiers:
+        runs-on: ubuntu-latest
+        needs: build-extra-tier
+        permissions:
+            contents: write
+        steps:
+            - name: Download all tier artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: dataset-*
+                  path: datasets/
 
             - name: Rename files for release
               run: |
-                  for tier in challenger grandmaster grandmaster_plus master master_plus diamond diamond_plus emerald platinum_plus platinum gold_plus gold silver bronze iron all; do
-                    cp output/${tier}/current-patch.json ${tier}-current-patch.json
-                    cp output/${tier}/30-days.json ${tier}-30-days.json
+                  for dir in datasets/dataset-*/; do
+                    tier="${dir#datasets/dataset-}"
+                    tier="${tier%/}"
+                    cp "${dir}current-patch.json" "${tier}-current-patch.json"
+                    cp "${dir}30-days.json" "${tier}-30-days.json"
                   done
 
             - name: Create datasets release if not exists
@@ -92,24 +128,6 @@ jobs:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload datasets to release
-              run: |
-                  gh release upload datasets \
-                    challenger-current-patch.json challenger-30-days.json \
-                    grandmaster-current-patch.json grandmaster-30-days.json \
-                    grandmaster_plus-current-patch.json grandmaster_plus-30-days.json \
-                    master-current-patch.json master-30-days.json \
-                    master_plus-current-patch.json master_plus-30-days.json \
-                    diamond-current-patch.json diamond-30-days.json \
-                    diamond_plus-current-patch.json diamond_plus-30-days.json \
-                    emerald-current-patch.json emerald-30-days.json \
-                    platinum_plus-current-patch.json platinum_plus-30-days.json \
-                    platinum-current-patch.json platinum-30-days.json \
-                    gold_plus-current-patch.json gold_plus-30-days.json \
-                    gold-current-patch.json gold-30-days.json \
-                    silver-current-patch.json silver-30-days.json \
-                    bronze-current-patch.json bronze-30-days.json \
-                    iron-current-patch.json iron-30-days.json \
-                    all-current-patch.json all-30-days.json \
-                    --clobber
+              run: gh release upload datasets *-current-patch.json *-30-days.json --clobber
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
