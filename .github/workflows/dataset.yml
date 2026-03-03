@@ -68,7 +68,7 @@ jobs:
 
             - name: Build extra tier datasets
               run: |
-                  for tier in diamond_plus emerald platinum gold silver bronze iron; do
+                  for tier in grandmaster_plus master_plus diamond_plus emerald platinum gold silver bronze iron; do
                     echo "=== Building $tier ==="
                     export TIER=$tier
                     bun run start
@@ -76,7 +76,7 @@ jobs:
 
             - name: Rename files for release
               run: |
-                  for tier in diamond_plus emerald platinum gold silver bronze iron; do
+                  for tier in grandmaster_plus master_plus diamond_plus emerald platinum gold silver bronze iron; do
                     cp output/${tier}/current-patch.json ${tier}-current-patch.json
                     cp output/${tier}/30-days.json ${tier}-30-days.json
                   done
@@ -94,6 +94,8 @@ jobs:
             - name: Upload datasets to release
               run: |
                   gh release upload datasets \
+                    grandmaster_plus-current-patch.json grandmaster_plus-30-days.json \
+                    master_plus-current-patch.json master_plus-30-days.json \
                     diamond_plus-current-patch.json diamond_plus-30-days.json \
                     emerald-current-patch.json emerald-30-days.json \
                     platinum-current-patch.json platinum-30-days.json \
