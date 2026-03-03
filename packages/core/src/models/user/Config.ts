@@ -8,7 +8,6 @@ export const RankTier = [
     "emerald_plus",
     "platinum_plus",
     "gold_plus",
-    "silver_plus",
     "all",
 ] as const;
 export type RankTier = (typeof RankTier)[number];
@@ -19,7 +18,6 @@ export const displayNameByRankTier: Record<RankTier, string> = {
     emerald_plus: "Emerald+",
     platinum_plus: "Platinum+",
     gold_plus: "Gold+",
-    silver_plus: "Silver+",
     all: "All Ranks",
 };
 
