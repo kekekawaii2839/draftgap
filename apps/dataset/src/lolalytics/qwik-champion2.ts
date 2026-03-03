@@ -50,11 +50,21 @@ export async function getLolalyticsQwikChampion2(
     //     queryParams.append("vslane", matchupRole);
     // }
 
+    const emptyResponse: LolalyticsChampion2Response = {
+        team_h: [],
+        team: { top: [], middle: [], bottom: [], support: [], jungle: [] },
+        response: { valid: false, duration: "" },
+    };
+
     const res = await retry(() =>
         fetch(`https://a1.lolalytics.com/mega/?${queryParams.toString()}`),
     );
 
-    const json = (await res.json()) as LolalyticsChampion2Response;
+    if (!res.ok) return emptyResponse;
 
-    return json;
+    try {
+        return (await res.json()) as LolalyticsChampion2Response;
+    } catch {
+        return emptyResponse;
+    }
 }
