@@ -66,29 +66,27 @@ jobs:
             - name: Install app dependencies
               run: bun install
 
-            - name: Build diamond_plus dataset
-              run: bun run start
-              env:
-                  TIER: diamond_plus
-
-            - name: Build gold_plus dataset
-              run: bun run start
-              env:
-                  TIER: gold_plus
+            - name: Build extra tier datasets
+              run: |
+                  for tier in master_plus diamond_plus platinum_plus gold_plus silver_plus all; do
+                    echo "=== Building $tier ==="
+                    export TIER=$tier
+                    bun run start
+                  done
 
             - name: Rename files for release
               run: |
-                  cp output/diamond_plus/current-patch.json diamond_plus-current-patch.json
-                  cp output/diamond_plus/30-days.json diamond_plus-30-days.json
-                  cp output/gold_plus/current-patch.json gold_plus-current-patch.json
-                  cp output/gold_plus/30-days.json gold_plus-30-days.json
+                  for tier in master_plus diamond_plus platinum_plus gold_plus silver_plus all; do
+                    cp output/${tier}/current-patch.json ${tier}-current-patch.json
+                    cp output/${tier}/30-days.json ${tier}-30-days.json
+                  done
 
             - name: Create datasets release if not exists
               run: |
                   gh release view datasets 2>/dev/null || \
                   gh release create datasets \
                     --title "Datasets" \
-                    --notes "Auto-updated tier datasets (Diamond+ and Gold+). Refreshed daily." \
+                    --notes "Auto-updated tier datasets. Refreshed daily." \
                     --prerelease
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,10 +94,12 @@ jobs:
             - name: Upload datasets to release
               run: |
                   gh release upload datasets \
-                    diamond_plus-current-patch.json \
-                    diamond_plus-30-days.json \
-                    gold_plus-current-patch.json \
-                    gold_plus-30-days.json \
+                    master_plus-current-patch.json master_plus-30-days.json \
+                    diamond_plus-current-patch.json diamond_plus-30-days.json \
+                    platinum_plus-current-patch.json platinum_plus-30-days.json \
+                    gold_plus-current-patch.json gold_plus-30-days.json \
+                    silver_plus-current-patch.json silver_plus-30-days.json \
+                    all-current-patch.json all-30-days.json \
                     --clobber
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
