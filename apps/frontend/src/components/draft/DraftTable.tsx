@@ -28,6 +28,7 @@ import { Dialog } from "../common/Dialog";
 import { ChampionDraftAnalysisDialog } from "../dialogs/ChampionDraftAnalysisDialog";
 import { Team } from "@draftgap/core/src/models/Team";
 import { championName } from "../../utils/i18n";
+import { ScalingSparkline } from "./ScalingSparkline";
 
 export default function DraftTable() {
     const { dataset } = useDataset();
@@ -312,6 +313,14 @@ export default function DraftTable() {
                     <RatingText rating={info.getValue<number>()} />
                 </div>
             ),
+        },
+        {
+            header: "Scaling",
+            accessorFn: (suggestion) => suggestion.scalingByTime,
+            cell: (info) => (
+                <ScalingSparkline scalingByTime={info.getValue<number[]>()} />
+            ),
+            enableSorting: false,
         },
         {
             id: "actions",

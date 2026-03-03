@@ -2,11 +2,14 @@ import { Role, ROLES } from "../models/Role";
 import { Dataset } from "../models/dataset/Dataset";
 import { DraftResult, AnalyzeDraftConfig, analyzeDraft } from "./analysis";
 import { getStats } from "./utils";
+import { getChampionScalingDeltas } from "./extra-analysis";
+import { priorGamesByRiskLevel } from "../risk/risk-level";
 
 export interface Suggestion {
     championKey: string;
     role: Role;
     draftResult: DraftResult;
+    scalingByTime: number[];
 }
 
 export function getSuggestions(
@@ -19,6 +22,15 @@ export function getSuggestions(
     const remainingRoles = ROLES.filter((role) => !team.has(role));
     const enemyChampions = new Set(enemy.values());
     const allyChampions = new Set(team.values());
+    const priorGames = priorGamesByRiskLevel[config.riskLevel];
+
+    const existingScalingTotals = Array.from({ length: 5 }, (_, i) =>
+        [...team.entries()].reduce(
+            (acc, [role, key]) =>
+                acc + getChampionScalingDeltas(synergyMatchupDataset, key, role, priorGames)[i],
+            0,
+        ),
+    );
 
     const suggestions: Suggestion[] = [];
 
@@ -46,10 +58,21 @@ export function getSuggestions(
             );
             team.delete(role);
 
+            const candidateDeltas = getChampionScalingDeltas(
+                synergyMatchupDataset,
+                championKey,
+                role,
+                priorGames,
+            );
+            const scalingByTime = existingScalingTotals.map(
+                (total, i) => total + candidateDeltas[i],
+            );
+
             suggestions.push({
                 championKey,
                 role,
                 draftResult,
+                scalingByTime,
             });
         }
     }

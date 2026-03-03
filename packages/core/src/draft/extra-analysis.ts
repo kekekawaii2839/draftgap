@@ -6,6 +6,33 @@ import { priorGamesByRiskLevel } from "../risk/risk-level";
 import { addStats } from "../stats";
 import { AnalyzeDraftConfig } from "./analysis";
 
+export function getChampionScalingDeltas(
+    fullDataset: Dataset,
+    championKey: string,
+    role: Role,
+    priorGames: number,
+): number[] {
+    const champion =
+        fullDataset.championData[championKey]?.statsByRole[role] ??
+        defaultChampionRoleData();
+
+    const baseChampionStats = addStats(champion, {
+        games: priorGames,
+        wins: priorGames * 0.5,
+    });
+    const baseChampionWinrate = baseChampionStats.wins / baseChampionStats.games;
+    const baseChampionRating = winrateToRating(baseChampionWinrate);
+
+    return Array.from({ length: 5 }, (_, i) => {
+        const championTime = champion.statsByTime[i];
+        const championStats = addStats(championTime, {
+            games: priorGames,
+            wins: priorGames * baseChampionWinrate,
+        });
+        return winrateToRating(championStats.wins / championStats.games) - baseChampionRating;
+    });
+}
+
 export function analyzeDraftExtra(
     dataset: Dataset,
     fullDataset: Dataset,
@@ -16,48 +43,22 @@ export function analyzeDraftExtra(
     const priorGames = priorGamesByRiskLevel[config.riskLevel];
 
     const ally = [...team.entries()];
-    const teamChampions = ally.map(
-        ([role, champion]) =>
-            fullDataset.championData[champion]?.statsByRole[role] ??
-            defaultChampionRoleData(),
-    );
+    const allChampionDeltas = ally.map(([role, championKey]) => ({
+        championKey,
+        role,
+        deltas: getChampionScalingDeltas(fullDataset, championKey, role, priorGames),
+    }));
 
     return {
         ratingByTime: Array.from({ length: 5 }).map((_, i) => {
-            const championTimeRatings = teamChampions.map((champion) => {
-                const championTime = champion.statsByTime[i];
-
-                const baseChampionStats = addStats(champion, {
-                    games: priorGames,
-                    wins: priorGames * 0.5,
-                });
-                const baseChampionWinrate =
-                    baseChampionStats.wins / baseChampionStats.games;
-                const baseChampionRating = winrateToRating(baseChampionWinrate);
-
-                const championStats = addStats(championTime, {
-                    games: priorGames,
-                    wins: priorGames * baseChampionWinrate,
-                });
-                const championTimeRating = winrateToRating(
-                    championStats.wins / championStats.games,
-                );
-
-                return championTimeRating - baseChampionRating;
-            });
-
-            const totalRating = championTimeRatings.reduce(
-                (acc, rating) => acc + rating,
-                0,
-            );
-
+            const championResults = allChampionDeltas.map((c) => ({
+                championKey: c.championKey,
+                role: c.role,
+                rating: c.deltas[i],
+            }));
             return {
-                championResults: championTimeRatings.map((rating, i) => ({
-                    championKey: ally[i][1],
-                    role: ally[i][0],
-                    rating,
-                })),
-                totalRating,
+                championResults,
+                totalRating: championResults.reduce((acc, c) => acc + c.rating, 0),
             };
         }),
     };

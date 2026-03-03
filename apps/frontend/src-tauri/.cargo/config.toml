@@ -1,0 +1,8 @@
+# Temporary workaround: force VS 2019 linker until VS 2022 is repaired
+# (VS 2022 is missing lib/x64/msvcrt.lib due to incomplete C++ workload install)
+# Remove this once VS 2022 "Desktop development with C++" workload is fully installed.
+[target.x86_64-pc-windows-msvc]
+linker = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\link.exe"
+
+[env]
+LIB = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.19041.0\\um\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.19041.0\\ucrt\\x64"
